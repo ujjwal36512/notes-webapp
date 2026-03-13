@@ -32,13 +32,18 @@ RUN rm -rf \
 # Uses Supabase (PostgreSQL). Set DATABASE_URL at runtime (e.g. Supabase connection string).
 FROM php:8.2-apache AS production
 
-# Install dependencies and PostgreSQL extension for Supabase
+# Install dependencies and PHP extensions for Supabase + image uploads
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
     libpq5 \
+    libpng-dev \
+    libjpeg62-turbo-dev \
+    libfreetype6-dev \
+    libcurl4-openssl-dev \
     curl \
-    && docker-php-ext-install pdo pdo_pgsql opcache \
-    && apt-get purge -y --auto-remove libpq-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg \
+    && docker-php-ext-install pdo pdo_pgsql opcache gd curl fileinfo \
+    && apt-get purge -y --auto-remove libpq-dev libpng-dev libjpeg62-turbo-dev libfreetype6-dev libcurl4-openssl-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/*
 
@@ -77,6 +82,8 @@ RUN { \
     echo "opcache.max_accelerated_files = 10000"; \
     echo "opcache.memory_consumption = 128"; \
     echo "opcache.interned_strings_buffer = 8"; \
+    echo "upload_max_filesize = 10M"; \
+    echo "post_max_size = 12M"; \
 } >> "$PHP_INI_DIR/php.ini"
 
 # Set environment variable for port
