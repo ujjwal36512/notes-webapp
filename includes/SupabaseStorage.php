@@ -23,7 +23,9 @@ class SupabaseStorage {
      */
     public function upload(string $filePath, string $filename): bool {
         $endpoint = $this->url . '/storage/v1/object/' . $this->bucket . '/' . $filename;
-        $mimeType = mime_content_type($filePath);
+        $mimeType = function_exists('mime_content_type')
+            ? mime_content_type($filePath)
+            : $this->guessMimeType($filename);
         $fileData = file_get_contents($filePath);
 
         $ch = curl_init($endpoint);
@@ -84,6 +86,22 @@ class SupabaseStorage {
         }
 
         return $statusCode === 200;
+    }
+
+    /**
+     * Guess MIME type from filename extension (fallback when fileinfo is disabled).
+     */
+    private function guessMimeType(string $filename): string {
+        $map = [
+            'jpg'  => 'image/jpeg',
+            'jpeg' => 'image/jpeg',
+            'png'  => 'image/png',
+            'gif'  => 'image/gif',
+            'webp' => 'image/webp',
+            'svg'  => 'image/svg+xml',
+        ];
+        $ext = strtolower(pathinfo($filename, PATHINFO_EXTENSION));
+        return $map[$ext] ?? 'application/octet-stream';
     }
 
     /**
