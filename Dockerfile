@@ -35,12 +35,13 @@ FROM php:8.2-apache AS production
 # Install dependencies and PostgreSQL extension for Supabase
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libpq-dev \
+    libpq5 \
     curl \
     && docker-php-ext-install pdo pdo_pgsql opcache \
-    && apt-get purge -y libpq-dev \
-    && apt-get autoremove -y \
+    && apt-get purge -y --auto-remove libpq-dev \
     && apt-get clean \
-    && rm -rf /var/lib/apt/lists/* /tmp/* /var/tmp/*
+    && rm -rf /var/lib/apt/lists/*
+
 
 # Enable Apache modules
 RUN a2enmod rewrite headers
